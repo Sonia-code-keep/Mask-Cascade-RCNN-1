@@ -42,6 +42,50 @@ def val_aug(SIZE):
     ])
     return aug
 
+from pycocotools.coco import COCO
+from torchvision import transforms
+from PIL import Image
+import torch
+import os
+import numpy as np
+
+class CocoFloorPlanDataset(torch.utils.data.Dataset):
+    def __init__(self, img_dir, ann_file, transform=None):
+        self.img_dir = img_dir
+        self.coco = COCO(ann_file)
+        self.ids = list(self.coco.imgs.keys())
+        self.transform = transform
+
+    def __getitem__(self, index):
+        img_id = self.ids[index]
+        ann_ids = self.coco.getAnnIds(imgIds=img_id)
+        anns = self.coco.loadAnns(ann_ids)
+        path = self.coco.loadImgs(img_id)[0]['file_name']
+        img = Image.open(os.path.join(self.img_dir, path)).convert("RGB")
+
+        boxes, masks, labels = [], [], []
+        for ann in anns:
+            boxes.append(ann['bbox'])  # [x, y, w, h]
+            masks.append(self.coco.annToMask(ann))
+            labels.append(ann['category_id'])
+
+        boxes = torch.tensor(boxes, dtype=torch.float32)
+        masks = torch.tensor(np.stack(masks), dtype=torch.uint8)
+        labels = torch.tensor(labels, dtype=torch.int64)
+
+        if self.transform:
+            img = self.transform(img)
+
+        return img, boxes, labels, masks
+
+    def __len__(self):
+        return len(self.ids)
+
+
+
+
+
+
 
 class WSGISDDataset(Dataset):
     def __init__(self, root, mode='train', resize=(1024, 1024)):
