@@ -78,7 +78,7 @@ def train(cfg):
                                      collate_fn=ds.collate_fn, num_workers=cfg.NUM_WORKERS)
 
     val_ds = WSGISDDataset(root='datasets/wgisd', resize=cfg.RESIZE, mode='test')
-    val_dl = torch.utils.data.DataLoader(val_ds, batch_size=1, shuffle=True,
+    val_dl = torch.utils.data.DataLoader(val_ds, batch_size=4, shuffle=True,
                                          collate_fn=ds.collate_fn, num_workers=4)
 
     model = CascadeRCNN(cfg).cuda()
@@ -89,7 +89,7 @@ def train(cfg):
     for epoch in range(cfg.EPOCH):
         t = time.time()
         summary_loss = train_one_epoch(model, dl, optimizer)
-        info = f'[RESULT]: Train. Epoch: {epoch:02d}, summary_loss: {summary_loss.avg:.3f}, time: {(time.time() - t):.3f}, '
+        info = f'[RESULT]: Train. Epoch: {epoch:50}, summary_loss: {summary_loss.avg:.3f}, time: {(time.time() - t):.3f}, '
         print(info)
 
         # summary_loss = val_one_epoch(model, val_dl)
